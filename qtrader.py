@@ -6,11 +6,11 @@ from collections import defaultdict
 
 class QTrader(object):
     def __init__(self):
-        self.df1 = pd.read_csv('./GSPC.csv', index_col='Date')
-        self.df1.index = pd.to_datetime(self.df1.index)
-        self.df2 = pd.read_csv('./tbill.csv', index_col='Date')
-        self.df2.index = pd.to_datetime(self.df2.index)
-        self.stock_data = pd.merge(self.df1, self.df2, right_index=True, left_index=True).sort_index()
+        self.GSPC = pd.read_csv('./GSPC.csv', index_col='Date')
+        self.GSPC.index = pd.to_datetime(self.GSPC.index)
+        self.tbill = pd.read_csv('./tbill.csv', index_col='Date')
+        self.tbill.index = pd.to_datetime(self.tbill.index)
+        self.stock_data = pd.merge(self.GSPC, self.tbill, right_index=True, left_index=True).sort_index()
         self.returns = pd.DataFrame({'stocks': self.stock_data['Adj Close'].rolling(window=2).apply(lambda x: x[1]/x[0]-1, raw=False),
                                      'tbills': (self.stock_data['tbill_rate']/100+1)**(1/52)-1}, index=self.stock_data.index)
         self.returns['risk_adjusted'] = self.returns.stocks - self.returns.tbills
