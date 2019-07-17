@@ -48,6 +48,14 @@ class QTrader(object):
         factors = pd.DataFrame({'action':0, 'reward':0, 'state': 0}, index=training_indexes)
         q = {0: {1:0, 0:0, -1:0}}
 
+        # Learning Q is quite expensive
+        # Dyna
+        # Learn Q
+        # update a model transitions and also rewards
+        # "hallucinate"
+        T = np.zeros((3,3,3))+0.00001
+        R = np.zeros((3,3))
+
         for i in range(100):
             last_row, last_date = None, None
 
@@ -79,7 +87,25 @@ class QTrader(object):
 
                     if not np.isnan(update):
                         q[state][action] += update
+
+                    # Dyna
+                    action_idx = int(last_row.action + 1)
+                    state_idx = int(last_row.state + 1)
+                    new_state_idx = int(state + 1)
+
+                    T[state_idx][action_idx][new_state_idx] += 1
+                    R[state_idx][action_idx] = (1-alpha)*R[state_idx][action_idx]+alpha*reward
+
                 last_date, last_row = date, factors.loc[date]
+            #Dyna
+            for j in range(100):
+                state_idx = random.randint(0,2)
+                action_idx = random.randint(0,2)
+                new_state = np.random.choice([-1,0,1],1,
+                                             p=T[state_idx][action_idx]/T[state_idx][action_idx].sum())[0]
+                r = R[state_idx][action_idx]
+                q[state][action] += alpha*(r+discount*max(q[new_state].values())-q[state][action])
+
 
             sharpe = self.sharpe(factors.action)
 
